@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        margin: 0;
+        padding: 15px;
+        background-color: #f8f9fa;
+      }
+      .container {
+        max-width: 400px;
+      }
+      h3 {
+        font-size: 1.25rem;
+        font-weight: 500;
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 10px;
+        margin-top: 0;
+      }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      .form-group label {
+        display: block;
+        font-size: 0.9rem;
+        font-weight: 500;
+        margin-bottom: 5px;
+        color: #495057;
+      }
+      input[type="text"],
+      input[type="date"],
+      input[list],
+      textarea {
+        width: 100%;
+        padding: 8px 10px;
+        font-size: 0.95rem;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        box-sizing: border-box; /* 패딩 포함하여 너비 100% */
+      }
+      textarea {
+        resize: vertical;
+      }
+      .form-group.checkbox {
+        display: flex;
+        align-items: center;
+      }
+      .form-group.checkbox input {
+        width: auto;
+        margin-right: 8px;
+      }
+      .form-group.checkbox label {
+        margin-bottom: 0;
+        font-weight: normal;
+      }
+      button {
+        width: 100%;
+        padding: 10px;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #fff;
+        background-color: #007bff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      button:disabled {
+        background-color: #cccccc;
+        cursor: not-allowed;
+      }
+      #loading {
+        text-align: center;
+        margin-top: 10px;
+        color: #007bff;
+      }
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h3>TODO 등록</h3>
+      
+      <form id="todoForm">
+        
+        <div class="form-group">
+          <label for="regDate">등록일자</label>
+          <input type="date" id="regDate">
+        </div>
+        
+        <div class="form-group">
+          <label for="dueDate">마감일자</label>
+          <input type="date" id="dueDate">
+        </div>
+
+        <div class="form-group">
+          <label for="category">대분류</label>
+          <input list="categories" id="category" required>
+          <datalist id="categories">
+            <option value="점심">
+            <option value="저녁">
+            <option value="봉사활동">
+            <option value="회사행사">
+            <option value="휴가">
+            <option value="회의">
+            <option value="기타이벤트">
+          </datalist>
+        </div>
+
+        <div class="form-group">
+          <label for="priority">중요도</label>
+          <input list="priorities" id="priority">
+          <datalist id="priorities">
+            <option value="5">
+            <option value="4">
+            <option value="3">
+            <option value="2">
+            <option value="1">
+            <option value="0">
+          </datalist>
+        </div>
+
+        <div class="form-group checkbox">
+          <input type="checkbox" id="urgent">
+          <label for="urgent">급한업무</label>
+        </div>
+
+        <div class="form-group">
+          <label for="todo">TODO (제목)</label>
+          <input type="text" id="todo" required>
+        </div>
+
+        <div class="form-group">
+          <label for="simpleDesc">간단내용 (캘린더 표시용)</label>
+          <input type="text" id="simpleDesc" required>
+        </div>
+
+        <div class="form-group">
+          <label for="detailedDesc">세부내용</label>
+          <textarea id="detailedDesc" rows="3"></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label for="relatedPeople">관련자</label>
+          <input type="text" id="relatedPeople">
+        </div>
+
+        <div class="form-group">
+          <button type="submit" id="saveButton">저장</button>
+          <div id="loading" class="hidden">저장 중...</div>
+        </div>
+      </form>
+    </div>
+    
+    <input type="hidden" id="prefillDate" value="<?= date ?>">
+    <input type="hidden" id="prefillType" value="<?= filterType ?>">
+
+    <script>
+      /**
+       * 페이지 로드 시 실행됩니다.
+       * 캘린더에서 날짜를 클릭해 창을 열었다면 날짜를 미리 채워줍니다.
+       * 등록일자는 기본적으로 오늘 날짜로 설정합니다.
+       */
+      window.addEventListener('load', function() {
+        const prefillDate = document.getElementById('prefillDate').value;
+        const prefillType = document.getElementById('prefillType').value;
+        
+        // 캘린더에서 날짜를 클릭한 경우
+        if (prefillDate && prefillType) {
+          if (prefillType === '등록일자') {
+            document.getElementById('regDate').value = prefillDate;
+          } else if (prefillType === '마감일자') {
+            document.getElementById('dueDate').value = prefillDate;
+          }
+        }
+        
+        // 등록일자가 비어있으면 오늘 날짜로 설정
+        if (!document.getElementById('regDate').value) {
+          const today = new Date().toISOString().split('T')[0];
+          document.getElementById('regDate').value = today;
+        }
+      });
+    
+      /**
+       * 폼 제출(저장 버튼 클릭) 시 실행됩니다.
+       */
+      document.getElementById('todoForm').addEventListener('submit', function(e) {
+        e.preventDefault(); // 폼의 기본 제출 동작 방지
+        
+        // 버튼 비활성화 및 로딩 표시
+        const saveButton = document.getElementById('saveButton');
+        const loadingDiv = document.getElementById('loading');
+        saveButton.disabled = true;
+        loadingDiv.classList.remove('hidden');
+    
+        // 폼 데이터를 객체로 수집
+        const formData = {
+          regDate: document.getElementById('regDate').value,
+          category: document.getElementById('category').value,
+          urgent: document.getElementById('urgent').checked, // boolean
+          dueDate: document.getElementById('dueDate').value,
+          todo: document.getElementById('todo').value,
+          priority: document.getElementById('priority').value,
+          simpleDesc: document.getElementById('simpleDesc').value,
+          detailedDesc: document.getElementById('detailedDesc').value,
+          relatedPeople: document.getElementById('relatedPeople').value,
+        };
+    
+        // Code.gs의 saveData 함수 호출
+        google.script.run
+          .withSuccessHandler(onSaveSuccess)
+          .withFailureHandler(onSaveFailure)
+          .saveData(formData);
+      });
+    
+      /**
+       * 데이터 저장 성공 시 콜백 함수
+       */
+      function onSaveSuccess(response) {
+        if (response.success) {
+          alert(response.message);
+          google.script.host.close(); // 성공 시 사이드바 닫기
+        } else {
+          // 서버 측에서 오류를 반환한 경우
+          onSaveFailure(new Error(response.message));
+        }
+      }
+    
+      /**
+       * 데이터 저장 실패 시 콜백 함수
+       */
+      function onSaveFailure(error) {
+        alert('저장 실패: ' + error.message);
+        
+        // 버튼 다시 활성화
+        const saveButton = document.getElementById('saveButton');
+        const loadingDiv = document.getElementById('loading');
+        saveButton.disabled = false;
+        loadingDiv.classList.add('hidden');
+      }
+    </script>
+  </body>
+</html>
