@@ -1,251 +1,555 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <base target="_top">
-    
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Sheets TO-DO List</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        margin: 0;
-        padding: 15px;
-        background-color: #f8f9fa;
-      }
-      .container {
-        max-width: 400px;
-      }
-      h3 {
-        font-size: 1.25rem;
-        font-weight: 500;
-        border-bottom: 1px solid #dee2e6;
-        padding-bottom: 10px;
-        margin-top: 0;
-      }
-      .form-group {
-        margin-bottom: 15px;
-      }
-      .form-group label {
-        display: block;
-        font-size: 0.9rem;
-        font-weight: 500;
-        margin-bottom: 5px;
-        color: #495057;
-      }
-      input[type="text"],
-      input[type="date"],
-      input[list],
-      textarea {
-        width: 100%;
-        padding: 8px 10px;
-        font-size: 0.95rem;
-        border: 1px solid #ced4da;
-        border-radius: 4px;
-        box-sizing: border-box; /* 패딩 포함하여 너비 100% */
-      }
-      textarea {
-        resize: vertical;
-      }
-      .form-group.checkbox {
-        display: flex;
-        align-items: center;
-      }
-      .form-group.checkbox input {
-        width: auto;
-        margin-right: 8px;
-      }
-      .form-group.checkbox label {
-        margin-bottom: 0;
-        font-weight: normal;
-      }
-      button {
-        width: 100%;
-        padding: 10px;
-        font-size: 1rem;
-        font-weight: 600;
-        color: #fff;
-        background-color: #007bff;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: background-color 0.2s;
-      }
-      button:hover {
-        background-color: #0056b3;
-      }
-      button:disabled {
-        background-color: #cccccc;
-        cursor: not-allowed;
-      }
-      #loading {
-        text-align: center;
-        margin-top: 10px;
-        color: #007bff;
-      }
-      .hidden {
-        display: none;
-      }
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .tab-active { border-bottom: 2px solid #3B82F6; color: #3B82F6; font-weight: 500; }
+        .calendar-day { min-height: 120px; }
+        .event { font-size: 0.8rem; padding: 2px 4px; border-radius: 4px; margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .is-today { background-color: #E0F2FE; }
+        .is-other-month { color: #9CA3AF; }
+        .vacation-cell { background-color: #FEE2E2 !important; }
+        .vacation-text { color: #DC2626; font-weight: bold; }
+
+        /* Custom Colors based on category */
+        .event-점심 { background-color: #FEE2E2; color: #991B1B; } /* Red */
+        .event-저녁 { background-color: #FEF3C7; color: #92400E; } /* Brown (using amber) */
+        .event-봉사활동 { background-color: #FEF9C3; color: #854D0E; } /* Yellow */
+        .event-회사행사 { background-color: #E5E7EB; color: #4B5563; } /* Gray */
+        .event-기타이벤트 { background-color: #EDE9FE; color: #5B21B6; } /* Light Purple */
+        .event-회의 { background-color: #DBEAFE; color: #1E40AF; } /* Blue */
+        
+        #dataTable th { cursor: pointer; }
+        #dataTable th:hover { background-color: #f0f0f0; }
+
+        /* Loading Spinner */
+        #loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
-  </head>
-  <body>
-    <div class="container">
-      <h3>TODO 등록</h3>
-      
-      <form id="todoForm">
-        
-        <div class="form-group">
-          <label for="regDate">등록일자</label>
-          <input type="date" id="regDate">
-        </div>
-        
-        <div class="form-group">
-          <label for="dueDate">마감일자</label>
-          <input type="date" id="dueDate">
+</head>
+<body class="bg-gray-100 p-4 sm:p-6">
+    <div id="loader"></div>
+    <div class="container mx-auto max-w-7xl bg-white rounded-lg shadow-lg p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h1 class="text-2xl font-bold text-gray-800">TO-DO List</h1>
+            <button id="addNewBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">신규 등록</button>
         </div>
 
-        <div class="form-group">
-          <label for="category">대분류</label>
-          <input list="categories" id="category" required>
-          <datalist id="categories">
-            <option value="점심">
-            <option value="저녁">
-            <option value="봉사활동">
-            <option value="회사행사">
-            <option value="휴가">
-            <option value="회의">
-            <option value="기타이벤트">
-          </datalist>
+        <!-- Tabs -->
+        <div class="border-b border-gray-200">
+            <nav class="flex space-x-4" aria-label="Tabs">
+                <button id="calendarTab" class="py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 tab-active">캘린더</button>
+                <button id="statusTab" class="py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">현황</button>
+            </nav>
         </div>
 
-        <div class="form-group">
-          <label for="priority">중요도</label>
-          <input list="priorities" id="priority">
-          <datalist id="priorities">
-            <option value="5">
-            <option value="4">
-            <option value="3">
-            <option value="2">
-            <option value="1">
-            <option value="0">
-          </datalist>
+        <!-- Calendar View -->
+        <div id="calendarView">
+            <div class="p-4 bg-gray-50 rounded-b-lg">
+                <!-- Calendar Controls -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">기준 날짜</label>
+                        <div class="flex items-center space-x-4">
+                            <label><input type="radio" name="dateType" value="등록일자" class="date-type-filter" checked> 등록일자</label>
+                            <label><input type="radio" name="dateType" value="마감일자" class="date-type-filter"> 마감일자</label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">대분류</label>
+                        <div id="categoryFilterContainer" class="flex flex-wrap gap-x-4 gap-y-2 text-sm"></div>
+                    </div>
+                     <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">중요도</label>
+                        <div id="priorityFilterContainer" class="flex flex-wrap gap-x-4 gap-y-2 text-sm"></div>
+                    </div>
+                </div>
+                <!-- Calendar Header -->
+                <div class="flex justify-between items-center mb-4">
+                    <button id="prevMonth" class="p-2 rounded-full hover:bg-gray-200">&lt;</button>
+                    <h2 id="calendarTitle" class="text-xl font-semibold"></h2>
+                    <button id="nextMonth" class="p-2 rounded-full hover:bg-gray-200">&gt;</button>
+                </div>
+                <!-- Calendar Grid -->
+                <div id="calendarGrid" class="grid grid-cols-7 gap-px bg-gray-200 border border-gray-200">
+                    <div class="text-center font-semibold py-2 bg-gray-100">일</div>
+                    <div class="text-center font-semibold py-2 bg-gray-100">월</div>
+                    <div class="text-center font-semibold py-2 bg-gray-100">화</div>
+                    <div class="text-center font-semibold py-2 bg-gray-100">수</div>
+                    <div class="text-center font-semibold py-2 bg-gray-100">목</div>
+                    <div class="text-center font-semibold py-2 bg-gray-100">금</div>
+                    <div class="text-center font-semibold py-2 bg-gray-100">토</div>
+                </div>
+            </div>
         </div>
 
-        <div class="form-group checkbox">
-          <input type="checkbox" id="urgent">
-          <label for="urgent">급한업무</label>
+        <!-- Status View -->
+        <div id="statusView" class="hidden">
+             <div class="p-4 bg-gray-50 rounded-b-lg">
+                 <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">월 선택 필터</label>
+                    <div id="monthFilterContainer" class="flex flex-wrap gap-x-4 gap-y-2 text-sm"></div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table id="dataTable" class="min-w-full bg-white border border-gray-200">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <!-- Headers will be populated by JS -->
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data rows will be populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+             </div>
         </div>
-
-        <div class="form-group">
-          <label for="todo">TODO (제목)</label>
-          <input type="text" id="todo" required>
-        </div>
-
-        <div class="form-group">
-          <label for="simpleDesc">간단내용 (캘린더 표시용)</label>
-          <input type="text" id="simpleDesc" required>
-        </div>
-
-        <div class="form-group">
-          <label for="detailedDesc">세부내용</label>
-          <textarea id="detailedDesc" rows="3"></textarea>
-        </div>
-        
-        <div class="form-group">
-          <label for="relatedPeople">관련자</label>
-          <input type="text" id="relatedPeople">
-        </div>
-
-        <div class="form-group">
-          <button type="submit" id="saveButton">저장</button>
-          <div id="loading" class="hidden">저장 중...</div>
-        </div>
-      </form>
     </div>
-    
-    <input type="hidden" id="prefillDate" value="<?= date ?>">
-    <input type="hidden" id="prefillType" value="<?= filterType ?>">
 
-    <script>
-      /**
-       * 페이지 로드 시 실행됩니다.
-       * 캘린더에서 날짜를 클릭해 창을 열었다면 날짜를 미리 채워줍니다.
-       * 등록일자는 기본적으로 오늘 날짜로 설정합니다.
-       */
-      window.addEventListener('load', function() {
-        const prefillDate = document.getElementById('prefillDate').value;
-        const prefillType = document.getElementById('prefillType').value;
-        
-        // 캘린더에서 날짜를 클릭한 경우
-        if (prefillDate && prefillType) {
-          if (prefillType === '등록일자') {
-            document.getElementById('regDate').value = prefillDate;
-          } else if (prefillType === '마감일자') {
-            document.getElementById('dueDate').value = prefillDate;
-          }
+    <!-- Modal for New/Edit -->
+    <div id="formModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+            <div class="flex justify-between items-center pb-3">
+                <p class="text-2xl font-bold">일정 등록/수정</p>
+                <button id="closeModal" class="cursor-pointer z-50 text-gray-400 hover:text-gray-600">&times;</button>
+            </div>
+            <form id="todoForm" class="space-y-4">
+                <input type="hidden" id="form-id">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="form-등록일자" class="block text-sm font-medium text-gray-700">등록일자</label>
+                        <input type="date" id="form-등록일자" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                    </div>
+                     <div>
+                        <label for="form-마감일자" class="block text-sm font-medium text-gray-700">마감일자</label>
+                        <input type="date" id="form-마감일자" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="form-대분류" class="block text-sm font-medium text-gray-700">대분류</label>
+                        <input list="category-list" id="form-대분류" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        <datalist id="category-list">
+                            <option value="점심"><option value="저녁"><option value="봉사활동"><option value="회사행사"><option value="휴가"><option value="회의"><option value="기타이벤트">
+                        </datalist>
+                    </div>
+                    <div>
+                        <label for="form-중요도" class="block text-sm font-medium text-gray-700">중요도</label>
+                        <input list="priority-list" id="form-중요도" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        <datalist id="priority-list">
+                            <option value="5"><option value="4"><option value="3"><option value="2"><option value="1"><option value="0">
+                        </datalist>
+                    </div>
+                </div>
+                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                     <div>
+                        <label for="form-TODO" class="block text-sm font-medium text-gray-700">TODO</label>
+                        <select id="form-TODO" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                            <option value="N">N</option>
+                            <option value="Y">Y</option>
+                        </select>
+                    </div>
+                     <div>
+                        <label for="form-급한업무" class="block text-sm font-medium text-gray-700">급한업무</label>
+                        <input type="text" id="form-급한업무" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                    </div>
+                     <div>
+                        <label for="form-관련자" class="block text-sm font-medium text-gray-700">관련자</label>
+                        <input type="text" id="form-관련자" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                    </div>
+                 </div>
+                <div>
+                    <label for="form-간단내용" class="block text-sm font-medium text-gray-700">간단내용 (제목)</label>
+                    <input type="text" id="form-간단내용" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
+                </div>
+                <div>
+                    <label for="form-세부내용" class="block text-sm font-medium text-gray-700">세부내용</label>
+                    <textarea id="form-세부내용" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"></textarea>
+                </div>
+                <div class="pt-4 flex justify-end">
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg transition duration-300">저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // !! IMPORTANT: REPLACE WITH YOUR GOOGLE APPS SCRIPT WEB APP URL !!
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby6toG28NuPV_tQFoK7UeIE80H5_VJiguNPEcjx51upIgHaHUmDlzC90LkiHwo_ZnGe/exec";
+
+    const loader = document.getElementById('loader');
+    const calendarTab = document.getElementById('calendarTab');
+    const statusTab = document.getElementById('statusTab');
+    const calendarView = document.getElementById('calendarView');
+    const statusView = document.getElementById('statusView');
+    const calendarTitle = document.getElementById('calendarTitle');
+    const calendarGrid = document.getElementById('calendarGrid');
+    const prevMonthBtn = document.getElementById('prevMonth');
+    const nextMonthBtn = document.getElementById('nextMonth');
+    const addNewBtn = document.getElementById('addNewBtn');
+    const formModal = document.getElementById('formModal');
+    const closeModalBtn = document.getElementById('closeModal');
+    const todoForm = document.getElementById('todoForm');
+    const dataTableBody = document.querySelector('#dataTable tbody');
+    const dataTableHeader = document.querySelector('#dataTable thead tr');
+    const categoryFilterContainer = document.getElementById('categoryFilterContainer');
+    const priorityFilterContainer = document.getElementById('priorityFilterContainer');
+    const monthFilterContainer = document.getElementById('monthFilterContainer');
+
+
+    let allData = [];
+    let headers = [];
+    let currentDate = new Date();
+    let sortState = { column: '등록일자', order: 'desc' };
+    let savedMonthFilters = JSON.parse(localStorage.getItem('todoMonthFilters')) || {};
+
+    const showLoader = (show) => {
+        loader.style.display = show ? 'block' : 'none';
+    };
+
+    const fetchData = async () => {
+        showLoader(true);
+        try {
+            const response = await fetch(SCRIPT_URL);
+            const result = await response.json();
+            if (result.status === 'success') {
+                headers = result.headers;
+                allData = result.data;
+                initialize();
+            } else {
+                alert('데이터 로딩 실패: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            alert('데이터를 가져오는 중 오류가 발생했습니다. Apps Script URL을 확인해주세요.');
+        } finally {
+            showLoader(false);
         }
-        
-        // 등록일자가 비어있으면 오늘 날짜로 설정
-        if (!document.getElementById('regDate').value) {
-          const today = new Date().toISOString().split('T')[0];
-          document.getElementById('regDate').value = today;
+    };
+    
+    const postData = async (data) => {
+        showLoader(true);
+        try {
+            const response = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors', // Apps Script web apps often need this
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+            // no-cors mode prevents reading the response, so we just assume success and refetch
+            await fetchData(); 
+        } catch (error) {
+            console.error('Error posting data:', error);
+            alert('데이터 저장 중 오류가 발생했습니다.');
+        } finally {
+            showLoader(false);
         }
-      });
-    
-      /**
-       * 폼 제출(저장 버튼 클릭) 시 실행됩니다.
-       */
-      document.getElementById('todoForm').addEventListener('submit', function(e) {
-        e.preventDefault(); // 폼의 기본 제출 동작 방지
-        
-        // 버튼 비활성화 및 로딩 표시
-        const saveButton = document.getElementById('saveButton');
-        const loadingDiv = document.getElementById('loading');
-        saveButton.disabled = true;
-        loadingDiv.classList.remove('hidden');
-    
-        // 폼 데이터를 객체로 수집
-        const formData = {
-          regDate: document.getElementById('regDate').value,
-          category: document.getElementById('category').value,
-          urgent: document.getElementById('urgent').checked, // boolean
-          dueDate: document.getElementById('dueDate').value,
-          todo: document.getElementById('todo').value,
-          priority: document.getElementById('priority').value,
-          simpleDesc: document.getElementById('simpleDesc').value,
-          detailedDesc: document.getElementById('detailedDesc').value,
-          relatedPeople: document.getElementById('relatedPeople').value,
-        };
-    
-        // Code.gs의 saveData 함수 호출
-        google.script.run
-          .withSuccessHandler(onSaveSuccess)
-          .withFailureHandler(onSaveFailure)
-          .saveData(formData);
-      });
-    
-      /**
-       * 데이터 저장 성공 시 콜백 함수
-       */
-      function onSaveSuccess(response) {
-        if (response.success) {
-          alert(response.message);
-          google.script.host.close(); // 성공 시 사이드바 닫기
-        } else {
-          // 서버 측에서 오류를 반환한 경우
-          onSaveFailure(new Error(response.message));
+    };
+
+
+    const initialize = () => {
+        setupFilters();
+        renderCalendar();
+        renderTable();
+        setupTableHeaders();
+    };
+
+    const setupFilters = () => {
+        const categories = [...new Set(allData.map(item => item.대분류).filter(Boolean))];
+        const priorities = [...new Set(allData.map(item => item.중요도).filter(p => p !== ''))];
+        const allMonths = [...new Set(allData.map(item => (item.등록일자 || '').substring(0, 7)))].sort().reverse();
+
+        categoryFilterContainer.innerHTML = categories.map(cat => `
+            <label class="inline-flex items-center">
+                <input type="checkbox" class="form-checkbox h-4 w-4 category-filter" value="${cat}" checked>
+                <span class="ml-2 text-gray-700">${cat}</span>
+            </label>
+        `).join('');
+
+        priorityFilterContainer.innerHTML = priorities.map(prio => `
+             <label class="inline-flex items-center">
+                <input type="checkbox" class="form-checkbox h-4 w-4 priority-filter" value="${prio}" checked>
+                <span class="ml-2 text-gray-700">${prio}</span>
+            </label>
+        `).join('');
+
+        monthFilterContainer.innerHTML = allMonths.map(month => `
+            <label class="inline-flex items-center">
+                <input type="checkbox" class="form-checkbox h-4 w-4 month-filter" value="${month}" ${savedMonthFilters[month] !== false ? 'checked' : ''}>
+                <span class="ml-2 text-gray-700">${month}</span>
+            </label>
+        `).join('');
+
+        document.querySelectorAll('.category-filter, .priority-filter, .date-type-filter').forEach(el => {
+            el.addEventListener('change', renderCalendar);
+        });
+        document.querySelectorAll('.month-filter').forEach(el => {
+            el.addEventListener('change', (e) => {
+                savedMonthFilters[e.target.value] = e.target.checked;
+                localStorage.setItem('todoMonthFilters', JSON.stringify(savedMonthFilters));
+                renderTable();
+            });
+        });
+    };
+
+    // Calendar Logic
+    const renderCalendar = () => {
+        // Clear previous grid except for headers
+        while (calendarGrid.children.length > 7) {
+            calendarGrid.removeChild(calendarGrid.lastChild);
         }
-      }
-    
-      /**
-       * 데이터 저장 실패 시 콜백 함수
-       */
-      function onSaveFailure(error) {
-        alert('저장 실패: ' + error.message);
+
+        calendarTitle.textContent = `${currentDate.getFullYear()}년 ${currentDate.getMonth() + 1}월`;
         
-        // 버튼 다시 활성화
-        const saveButton = document.getElementById('saveButton');
-        const loadingDiv = document.getElementById('loading');
-        saveButton.disabled = false;
-        loadingDiv.classList.add('hidden');
-      }
-    </script>
-  </body>
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        
+        const selectedDateType = document.querySelector('input[name="dateType"]:checked').value;
+        const selectedCategories = [...document.querySelectorAll('.category-filter:checked')].map(el => el.value);
+        const selectedPriorities = [...document.querySelectorAll('.priority-filter:checked')].map(el => el.value);
+
+        const filteredData = allData.filter(item => {
+            const dateStr = item[selectedDateType];
+            if (!dateStr) return false;
+            const itemDate = new Date(dateStr);
+            const inMonth = itemDate.getFullYear() === year && itemDate.getMonth() === month;
+            const inCategory = selectedCategories.includes(item.대분류);
+            const inPriority = selectedPriorities.includes(String(item.중요도));
+            return inMonth && inCategory && inPriority;
+        });
+
+        // Create empty cells for the first day offset
+        for (let i = 0; i < firstDay.getDay(); i++) {
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'calendar-day p-2 bg-white is-other-month';
+            calendarGrid.appendChild(emptyCell);
+        }
+
+        // Create cells for each day of the month
+        for (let i = 1; i <= lastDay.getDate(); i++) {
+            const dayCell = document.createElement('div');
+            dayCell.className = 'calendar-day p-2 bg-white relative';
+            dayCell.dataset.date = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+            
+            const dayNumber = document.createElement('span');
+            dayNumber.textContent = i;
+            dayCell.appendChild(dayNumber);
+
+            // Highlight today
+            const today = new Date();
+            if (year === today.getFullYear() && month === today.getMonth() && i === today.getDate()) {
+                dayNumber.classList.add('bg-blue-500', 'text-white', 'rounded-full', 'w-6', 'h-6', 'flex', 'items-center', 'justify-center');
+            }
+            
+            dayCell.addEventListener('click', () => openModalForNew(dayCell.dataset.date));
+            
+            const eventsForDay = filteredData.filter(item => {
+                const itemDate = new Date(item[selectedDateType]);
+                return itemDate.getDate() === i;
+            });
+            
+            let isVacationDay = false;
+
+            eventsForDay.forEach(event => {
+                const eventEl = document.createElement('div');
+                eventEl.textContent = event.간단내용;
+                eventEl.className = `event event-${event.대분류} cursor-pointer`;
+                if(event.대분류 === '휴가') {
+                    eventEl.classList.add('vacation-text');
+                    isVacationDay = true;
+                }
+                eventEl.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevent day click
+                    openModalForEdit(event);
+                });
+                dayCell.appendChild(eventEl);
+            });
+
+            if(isVacationDay) {
+                dayCell.classList.add('vacation-cell');
+            }
+
+            calendarGrid.appendChild(dayCell);
+        }
+    };
+    
+    prevMonthBtn.addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() - 1);
+        renderCalendar();
+    });
+
+    nextMonthBtn.addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        renderCalendar();
+    });
+
+
+    // Status (Table) Logic
+    const setupTableHeaders = () => {
+        dataTableHeader.innerHTML = '';
+        headers.forEach(header => {
+            const th = document.createElement('th');
+            th.className = 'py-3 px-4 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider border-b';
+            th.textContent = header;
+            th.dataset.column = header;
+            th.addEventListener('click', () => {
+                const column = th.dataset.column;
+                const order = sortState.column === column && sortState.order === 'asc' ? 'desc' : 'asc';
+                sortState = { column, order };
+                renderTable();
+            });
+            dataTableHeader.appendChild(th);
+        });
+    };
+    
+    const renderTable = () => {
+        dataTableBody.innerHTML = '';
+        
+        const activeMonthFilters = [...document.querySelectorAll('.month-filter:checked')].map(el => el.value);
+
+        const filtered = allData.filter(item => {
+             const itemMonth = (item.등록일자 || '').substring(0, 7);
+             return activeMonthFilters.includes(itemMonth);
+        });
+
+        const sorted = [...filtered].sort((a, b) => {
+            const valA = a[sortState.column] || '';
+            const valB = b[sortState.column] || '';
+            if (valA < valB) return sortState.order === 'asc' ? -1 : 1;
+            if (valA > valB) return sortState.order === 'asc' ? 1 : -1;
+            return 0;
+        });
+        
+        sorted.forEach(item => {
+            const row = document.createElement('tr');
+            row.className = 'border-b hover:bg-gray-50';
+            row.dataset.id = item.id;
+
+            headers.forEach(header => {
+                const cell = document.createElement('td');
+                cell.className = 'py-3 px-4 text-sm text-gray-700';
+                cell.textContent = item[header] || '';
+                cell.dataset.column = header;
+                cell.setAttribute('contenteditable', 'true');
+                cell.addEventListener('blur', (e) => {
+                    const newValue = e.target.textContent;
+                    if(item[header] !== newValue) {
+                        item[header] = newValue;
+                        postData({ action: 'update', rowData: item });
+                    }
+                });
+                row.appendChild(cell);
+            });
+            dataTableBody.appendChild(row);
+        });
+    };
+
+
+    // Modal Logic
+    const openModalForNew = (date) => {
+        todoForm.reset();
+        document.getElementById('form-id').value = '';
+        const today = date ? new Date(date) : new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        document.getElementById('form-등록일자').value = `${yyyy}-${mm}-${dd}`;
+        formModal.style.display = 'block';
+    };
+
+    const openModalForEdit = (item) => {
+        todoForm.reset();
+        document.getElementById('form-id').value = item.id;
+        for (const key in item) {
+            const input = document.getElementById(`form-${key}`);
+            if (input) {
+                if (input.type === 'date') {
+                     input.value = item[key] ? item[key].split('T')[0] : '';
+                } else {
+                     input.value = item[key];
+                }
+            }
+        }
+        formModal.style.display = 'block';
+    };
+
+    const closeModal = () => {
+        formModal.style.display = 'none';
+    };
+    
+    closeModalBtn.addEventListener('click', closeModal);
+    addNewBtn.addEventListener('click', () => openModalForNew(null));
+    formModal.addEventListener('click', (e) => {
+        if(e.target === formModal) closeModal();
+    });
+
+    todoForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const rowData = {};
+        headers.forEach(header => {
+            const input = document.getElementById(`form-${header}`);
+            if (input) {
+                 rowData[header] = input.value;
+            }
+        });
+        
+        const action = rowData.id ? 'update' : 'create';
+        await postData({ action, rowData });
+        closeModal();
+    });
+    
+
+    // Tab switching
+    calendarTab.addEventListener('click', () => {
+        calendarView.style.display = 'block';
+        statusView.style.display = 'none';
+        calendarTab.classList.add('tab-active');
+        statusTab.classList.remove('tab-active');
+    });
+
+    statusTab.addEventListener('click', () => {
+        calendarView.style.display = 'none';
+        statusView.style.display = 'block';
+        statusTab.classList.add('tab-active');
+        calendarTab.classList.remove('tab-active');
+    });
+
+    // Initial Load
+    if (SCRIPT_URL === "YOUR_GOOGLE_APPS_SCRIPT_URL") {
+        alert("중요: index.html 파일의 123번째 줄에 있는 SCRIPT_URL을 본인의 Google Apps Script URL로 교체해주세요.");
+        showLoader(false);
+    } else {
+        fetchData();
+    }
+});
+</script>
+
+</body>
 </html>
