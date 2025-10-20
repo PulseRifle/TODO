@@ -7,30 +7,55 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Noto Sans KR', sans-serif; }
-        .tab-active { border-bottom: 2px solid #3B82F6; color: #3B82F6; font-weight: 500; }
-        .calendar-day { min-height: 120px; }
-        .event { font-size: 0.8rem; padding: 2px 4px; border-radius: 4px; margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .is-today { background-color: #E0F2FE; }
-        .is-other-month { color: #9CA3AF; }
-        .vacation-cell { background-color: #FEE2E2 !important; }
-        .vacation-text { color: #DC2626; font-weight: bold; }
-
-        /* Custom Colors based on category */
-        .event-점심 { background-color: #FEE2E2; color: #991B1B; } /* Red */
-        .event-저녁 { background-color: #FEF3C7; color: #92400E; } /* Brown (using amber) */
-        .event-봉사활동 { background-color: #FEF9C3; color: #854D0E; } /* Yellow */
-        .event-회사행사 { background-color: #E5E7EB; color: #4B5563; } /* Gray */
-        .event-기타이벤트 { background-color: #EDE9FE; color: #5B21B6; } /* Light Purple */
-        .event-회의 { background-color: #DBEAFE; color: #1E40AF; } /* Blue */
+        body { 
+            font-family: 'Noto Sans KR', sans-serif; 
+            background-color: #f7fafc; /* Light gray background */
+        }
+        .tab-active { 
+            border-bottom: 2px solid #6366F1; /* Indigo */
+            color: #4F46E5; /* Darker Indigo */
+            font-weight: 700; 
+        }
+        .calendar-day { 
+            min-height: 90px;
+            font-size: 0.8rem;
+            transition: background-color 0.2s ease;
+        }
+        .event { 
+            font-size: 0.75rem; 
+            padding: 2px 5px; 
+            border-radius: 6px; 
+            margin-bottom: 2px; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            white-space: nowrap; 
+            border: 1px solid transparent;
+        }
+        .is-resting-day {
+            background-color: #f1f5f9 !important; /* Very light slate for resting days */
+        }
+        .holiday-text {
+            font-size: 0.7rem;
+            color: #EF4444; /* Red for holidays */
+            font-weight: 500;
+        }
+        
+        /* Custom Colors based on category - Refined Palette */
+        .event-점심 { background-color: #FEF3C7; color: #92400E; border-color: #FDE68A; } /* Amber */
+        .event-저녁 { background-color: #FFEDD5; color: #9A3412; border-color: #FED7AA; } /* Orange */
+        .event-봉사활동 { background-color: #D9F99D; color: #3F6212; border-color: #BEF264; } /* Lime */
+        .event-회사행사 { background-color: #E2E8F0; color: #334155; border-color: #CBD5E1; } /* Slate */
+        .event-기타이벤트 { background-color: #E0E7FF; color: #3730A3; border-color: #C7D2FE; } /* Indigo */
+        .event-회의 { background-color: #CFFAFE; color: #0891B2; border-color: #A5F3FC; } /* Cyan */
+        .event-휴가 { background-color: #E5E7EB; color: #4B5563; border-color: #D1D5DB; } /* Gray for vacation event */
         
         #dataTable th { cursor: pointer; }
-        #dataTable th:hover { background-color: #f0f0f0; }
+        #dataTable th:hover { background-color: #f1f5f9; }
 
         /* Loading Spinner */
         #loader {
             border: 5px solid #f3f3f3;
-            border-top: 5px solid #3498db;
+            border-top: 5px solid #6366F1; /* Indigo spinner */
             border-radius: 50%;
             width: 50px;
             height: 50px;
@@ -47,19 +72,26 @@
         }
     </style>
 </head>
-<body class="bg-gray-100 p-4 sm:p-6">
+<body class="p-4 sm:p-6">
     <div id="loader"></div>
-    <div class="container mx-auto max-w-7xl bg-white rounded-lg shadow-lg p-6">
-        <div class="flex justify-between items-center mb-4">
-            <h1 class="text-2xl font-bold text-gray-800">TO-DO List</h1>
-            <button id="addNewBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">신규 등록</button>
+    <div class="container mx-auto max-w-7xl bg-white rounded-xl shadow-lg p-6">
+        <div class="flex justify-between items-center mb-6 pb-4 border-b">
+             <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </div>
+                <h1 class="text-3xl font-bold text-gray-800">TO-DO List</h1>
+            </div>
+            <button id="addNewBtn" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-5 rounded-lg transition-all duration-300 shadow hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50">
+                신규 등록
+            </button>
         </div>
 
         <!-- Tabs -->
         <div class="border-b border-gray-200">
-            <nav class="flex space-x-4" aria-label="Tabs">
-                <button id="calendarTab" class="py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 tab-active">캘린더</button>
-                <button id="statusTab" class="py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">현황</button>
+            <nav class="flex space-x-6" aria-label="Tabs">
+                <button id="calendarTab" class="py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 tab-active">캘린더</button>
+                <button id="statusTab" class="py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">현황</button>
             </nav>
         </div>
 
@@ -67,38 +99,68 @@
         <div id="calendarView">
             <div class="p-4 bg-gray-50 rounded-b-lg">
                 <!-- Calendar Controls -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">기준 날짜</label>
-                        <div class="flex items-center space-x-4">
-                            <label><input type="radio" name="dateType" value="등록일자" class="date-type-filter" checked> 등록일자</label>
-                            <label><input type="radio" name="dateType" value="마감일자" class="date-type-filter"> 마감일자</label>
-                        </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6 p-4 bg-white rounded-lg border">
+                     <div>
+                        <label for="yearSelect" class="block text-sm font-medium text-gray-700 mb-2">연도</label>
+                        <select id="yearSelect" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50 p-2.5 bg-gray-50 focus:bg-white"></select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">대분류</label>
-                        <div id="categoryFilterContainer" class="flex flex-wrap gap-x-4 gap-y-2 text-sm"></div>
+                        <label for="monthSelect" class="block text-sm font-medium text-gray-700 mb-2">월</label>
+                        <select id="monthSelect" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50 p-2.5 bg-gray-50 focus:bg-white">
+                            <option value="1">1월</option><option value="2">2월</option><option value="3">3월</option><option value="4">4월</option>
+                            <option value="5">5월</option><option value="6">6월</option><option value="7">7월</option><option value="8">8월</option>
+                            <option value="9">9월</option><option value="10">10월</option><option value="11">11월</option><option value="12">12월</option>
+                        </select>
                     </div>
                      <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">중요도</label>
-                        <div id="priorityFilterContainer" class="flex flex-wrap gap-x-4 gap-y-2 text-sm"></div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">대분류</label>
+                        <div id="categoryFilterContainer" class="flex flex-wrap gap-x-4 gap-y-2 text-sm pt-2"></div>
+                    </div>
+                     <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">중요도</label>
+                        <div id="priorityFilterContainer" class="flex flex-wrap gap-x-4 gap-y-2 text-sm pt-2"></div>
+                    </div>
+                    <div class="md:col-span-2 lg:col-span-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">기준 날짜</label>
+                        <div class="flex items-center space-x-4">
+                            <label class="flex items-center"><input type="radio" name="dateType" value="등록일자" class="date-type-filter h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500" checked> <span class="ml-2">등록일자</span></label>
+                            <label class="flex items-center"><input type="radio" name="dateType" value="마감일자" class="date-type-filter h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"> <span class="ml-2">마감일자</span></label>
+                        </div>
                     </div>
                 </div>
-                <!-- Calendar Header -->
-                <div class="flex justify-between items-center mb-4">
-                    <button id="prevMonth" class="p-2 rounded-full hover:bg-gray-200">&lt;</button>
-                    <h2 id="calendarTitle" class="text-xl font-semibold"></h2>
-                    <button id="nextMonth" class="p-2 rounded-full hover:bg-gray-200">&gt;</button>
+
+                <!-- Calendar Navigation -->
+                <div class="flex justify-center items-center mb-4 space-x-4">
+                    <button id="prevMonth" class="bg-white border rounded-lg px-4 py-2 text-sm font-medium hover:bg-gray-100 transition-colors">이전 달</button>
+                    <button id="nextMonth" class="bg-white border rounded-lg px-4 py-2 text-sm font-medium hover:bg-gray-100 transition-colors">다음 달</button>
                 </div>
-                <!-- Calendar Grid -->
-                <div id="calendarGrid" class="grid grid-cols-7 gap-px bg-gray-200 border border-gray-200">
-                    <div class="text-center font-semibold py-2 bg-gray-100">일</div>
-                    <div class="text-center font-semibold py-2 bg-gray-100">월</div>
-                    <div class="text-center font-semibold py-2 bg-gray-100">화</div>
-                    <div class="text-center font-semibold py-2 bg-gray-100">수</div>
-                    <div class="text-center font-semibold py-2 bg-gray-100">목</div>
-                    <div class="text-center font-semibold py-2 bg-gray-100">금</div>
-                    <div class="text-center font-semibold py-2 bg-gray-100">토</div>
+                
+                 <!-- 3-Month Calendar Container -->
+                <div id="multiCalendarContainer" class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <!-- Calendar 1 -->
+                    <div id="calendarContainer1" class="border rounded-lg bg-white p-3">
+                        <h2 class="calendar-title-text text-lg font-semibold text-center text-gray-700 mb-2"></h2>
+                        <div class="grid grid-cols-7 text-center text-xs font-bold border-b pb-1 mb-1 text-gray-500">
+                            <div class="text-red-500">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="text-blue-500">토</div>
+                        </div>
+                        <div class="calendar-grid grid grid-cols-7 gap-px"></div>
+                    </div>
+                    <!-- Calendar 2 -->
+                    <div id="calendarContainer2" class="border rounded-lg bg-white p-3">
+                        <h2 class="calendar-title-text text-lg font-semibold text-center text-gray-700 mb-2"></h2>
+                        <div class="grid grid-cols-7 text-center text-xs font-bold border-b pb-1 mb-1 text-gray-500">
+                             <div class="text-red-500">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="text-blue-500">토</div>
+                        </div>
+                        <div class="calendar-grid grid grid-cols-7 gap-px"></div>
+                    </div>
+                    <!-- Calendar 3 -->
+                    <div id="calendarContainer3" class="border rounded-lg bg-white p-3">
+                        <h2 class="calendar-title-text text-lg font-semibold text-center text-gray-700 mb-2"></h2>
+                        <div class="grid grid-cols-7 text-center text-xs font-bold border-b pb-1 mb-1 text-gray-500">
+                             <div class="text-red-500">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="text-blue-500">토</div>
+                        </div>
+                        <div class="calendar-grid grid grid-cols-7 gap-px"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -106,12 +168,12 @@
         <!-- Status View -->
         <div id="statusView" class="hidden">
              <div class="p-4 bg-gray-50 rounded-b-lg">
-                 <div class="mb-4">
+                 <div class="mb-4 p-4 bg-white rounded-lg border">
                     <label class="block text-sm font-medium text-gray-700 mb-2">월 선택 필터</label>
                     <div id="monthFilterContainer" class="flex flex-wrap gap-x-4 gap-y-2 text-sm"></div>
                 </div>
                 <div class="overflow-x-auto">
-                    <table id="dataTable" class="min-w-full bg-white border border-gray-200">
+                    <table id="dataTable" class="min-w-full bg-white border border-gray-200 rounded-lg">
                         <thead class="bg-gray-100">
                             <tr>
                                 <!-- Headers will be populated by JS -->
@@ -127,35 +189,35 @@
     </div>
 
     <!-- Modal for New/Edit -->
-    <div id="formModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-        <div class="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
-            <div class="flex justify-between items-center pb-3">
-                <p class="text-2xl font-bold">일정 등록/수정</p>
-                <button id="closeModal" class="cursor-pointer z-50 text-gray-400 hover:text-gray-600">&times;</button>
+    <div id="formModal" class="fixed inset-0 bg-gray-800 bg-opacity-60 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-10 mx-auto p-6 border w-full max-w-2xl shadow-2xl rounded-lg bg-white">
+            <div class="flex justify-between items-center pb-4 border-b">
+                <p class="text-2xl font-bold text-gray-800">일정 등록/수정</p>
+                <button id="closeModal" class="cursor-pointer z-50 text-gray-400 hover:text-gray-600 text-3xl leading-none">&times;</button>
             </div>
-            <form id="todoForm" class="space-y-4">
+            <form id="todoForm" class="space-y-4 pt-6">
                 <input type="hidden" id="form-id">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label for="form-등록일자" class="block text-sm font-medium text-gray-700">등록일자</label>
-                        <input type="date" id="form-등록일자" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        <input type="date" id="form-등록일자" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50 p-2.5 bg-gray-50 focus:bg-white">
                     </div>
                      <div>
                         <label for="form-마감일자" class="block text-sm font-medium text-gray-700">마감일자</label>
-                        <input type="date" id="form-마감일자" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        <input type="date" id="form-마감일자" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50 p-2.5 bg-gray-50 focus:bg-white">
                     </div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label for="form-대분류" class="block text-sm font-medium text-gray-700">대분류</label>
-                        <input list="category-list" id="form-대분류" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        <input list="category-list" id="form-대분류" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50 p-2.5 bg-gray-50 focus:bg-white">
                         <datalist id="category-list">
                             <option value="점심"><option value="저녁"><option value="봉사활동"><option value="회사행사"><option value="휴가"><option value="회의"><option value="기타이벤트">
                         </datalist>
                     </div>
                     <div>
                         <label for="form-중요도" class="block text-sm font-medium text-gray-700">중요도</label>
-                        <input list="priority-list" id="form-중요도" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        <input list="priority-list" id="form-중요도" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50 p-2.5 bg-gray-50 focus:bg-white">
                         <datalist id="priority-list">
                             <option value="5"><option value="4"><option value="3"><option value="2"><option value="1"><option value="0">
                         </datalist>
@@ -164,30 +226,30 @@
                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                      <div>
                         <label for="form-TODO" class="block text-sm font-medium text-gray-700">TODO</label>
-                        <select id="form-TODO" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        <select id="form-TODO" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50 p-2.5 bg-gray-50 focus:bg-white">
                             <option value="N">N</option>
                             <option value="Y">Y</option>
                         </select>
                     </div>
                      <div>
                         <label for="form-급한업무" class="block text-sm font-medium text-gray-700">급한업무</label>
-                        <input type="text" id="form-급한업무" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        <input type="text" id="form-급한업무" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50 p-2.5 bg-gray-50 focus:bg-white">
                     </div>
                      <div>
                         <label for="form-관련자" class="block text-sm font-medium text-gray-700">관련자</label>
-                        <input type="text" id="form-관련자" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        <input type="text" id="form-관련자" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50 p-2.5 bg-gray-50 focus:bg-white">
                     </div>
                  </div>
                 <div>
                     <label for="form-간단내용" class="block text-sm font-medium text-gray-700">간단내용 (제목)</label>
-                    <input type="text" id="form-간단내용" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
+                    <input type="text" id="form-간단내용" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50 p-2.5 bg-gray-50 focus:bg-white" required>
                 </div>
                 <div>
                     <label for="form-세부내용" class="block text-sm font-medium text-gray-700">세부내용</label>
-                    <textarea id="form-세부내용" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"></textarea>
+                    <textarea id="form-세부내용" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50 p-2.5 bg-gray-50 focus:bg-white"></textarea>
                 </div>
-                <div class="pt-4 flex justify-end">
-                    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg transition duration-300">저장</button>
+                <div class="pt-6 flex justify-end">
+                    <button type="submit" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg transition-all duration-300 shadow hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50">저장</button>
                 </div>
             </form>
         </div>
@@ -205,8 +267,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusTab = document.getElementById('statusTab');
     const calendarView = document.getElementById('calendarView');
     const statusView = document.getElementById('statusView');
-    const calendarTitle = document.getElementById('calendarTitle');
-    const calendarGrid = document.getElementById('calendarGrid');
+    const yearSelect = document.getElementById('yearSelect');
+    const monthSelect = document.getElementById('monthSelect');
+    const calendarContainers = [
+        document.getElementById('calendarContainer1'),
+        document.getElementById('calendarContainer2'),
+        document.getElementById('calendarContainer3')
+    ];
     const prevMonthBtn = document.getElementById('prevMonth');
     const nextMonthBtn = document.getElementById('nextMonth');
     const addNewBtn = document.getElementById('addNewBtn');
@@ -219,12 +286,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const priorityFilterContainer = document.getElementById('priorityFilterContainer');
     const monthFilterContainer = document.getElementById('monthFilterContainer');
 
-
     let allData = [];
     let headers = [];
     let currentDate = new Date();
     let sortState = { column: '등록일자', order: 'desc' };
     let savedMonthFilters = JSON.parse(localStorage.getItem('todoMonthFilters')) || {};
+    
+    const holidays = {
+        '2024': { '01-01': '신정', '02-09': '설날 연휴', '02-10': '설날', '02-11': '설날 연휴', '02-12': '대체공휴일(설날)', '03-01': '삼일절', '04-10': '국회의원 선거', '05-01': '근로자의 날', '05-05': '어린이날', '05-06': '대체공휴일(어린이날)', '05-15': '부처님오신날', '06-06': '현충일', '08-15': '광복절', '09-16': '추석 연휴', '09-17': '추석', '09-18': '추석 연휴', '10-03': '개천절', '10-09': '한글날', '12-25': '크리스마스' },
+        '2025': { '01-01': '신정', '01-28': '설날 연휴', '01-29': '설날', '01-30': '설날 연휴', '03-01': '삼일절', '05-01': '근로자의 날', '05-05': '부처님오신날', '05-06': '대체공휴일(부처님오신날)', '06-06': '현충일', '08-15': '광복절', '10-03': '개천절', '10-05': '추석 연휴', '10-06': '추석', '10-07': '추석 연휴', '10-08': '대체공휴일(추석)', '10-09': '한글날', '12-25': '크리스마스' },
+    };
 
     const showLoader = (show) => {
         loader.style.display = show ? 'block' : 'none';
@@ -253,15 +324,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const postData = async (data) => {
         showLoader(true);
         try {
-            const response = await fetch(SCRIPT_URL, {
+            await fetch(SCRIPT_URL, {
                 method: 'POST',
-                mode: 'no-cors', // Apps Script web apps often need this
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                mode: 'no-cors',
+                headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(data),
             });
-            // no-cors mode prevents reading the response, so we just assume success and refetch
             await fetchData(); 
         } catch (error) {
             console.error('Error posting data:', error);
@@ -271,42 +339,58 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-
     const initialize = () => {
+        setupSelectors();
         setupFilters();
-        renderCalendar();
+        renderMultiCalendar();
         renderTable();
         setupTableHeaders();
     };
 
+    const setupSelectors = () => {
+        const currentYear = new Date().getFullYear();
+        yearSelect.innerHTML = '';
+        for (let i = currentYear - 5; i <= currentYear + 5; i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.textContent = `${i}년`;
+            yearSelect.appendChild(option);
+        }
+        yearSelect.value = currentDate.getFullYear();
+        monthSelect.value = currentDate.getMonth() + 1;
+
+        yearSelect.addEventListener('change', renderMultiCalendar);
+        monthSelect.addEventListener('change', renderMultiCalendar);
+    };
+
     const setupFilters = () => {
         const categories = [...new Set(allData.map(item => item.대분류).filter(Boolean))];
-        const priorities = [...new Set(allData.map(item => item.중요도).filter(p => p !== ''))];
+        const priorities = [...new Set(allData.map(item => item.중요도).filter(p => p !== ''))].sort((a,b) => b-a);
         const allMonths = [...new Set(allData.map(item => (item.등록일자 || '').substring(0, 7)))].sort().reverse();
 
         categoryFilterContainer.innerHTML = categories.map(cat => `
             <label class="inline-flex items-center">
-                <input type="checkbox" class="form-checkbox h-4 w-4 category-filter" value="${cat}" checked>
+                <input type="checkbox" class="form-checkbox h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 category-filter" value="${cat}" checked>
                 <span class="ml-2 text-gray-700">${cat}</span>
             </label>
         `).join('');
 
         priorityFilterContainer.innerHTML = priorities.map(prio => `
              <label class="inline-flex items-center">
-                <input type="checkbox" class="form-checkbox h-4 w-4 priority-filter" value="${prio}" checked>
+                <input type="checkbox" class="form-checkbox h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 priority-filter" value="${prio}" checked>
                 <span class="ml-2 text-gray-700">${prio}</span>
             </label>
         `).join('');
 
         monthFilterContainer.innerHTML = allMonths.map(month => `
             <label class="inline-flex items-center">
-                <input type="checkbox" class="form-checkbox h-4 w-4 month-filter" value="${month}" ${savedMonthFilters[month] !== false ? 'checked' : ''}>
+                <input type="checkbox" class="form-checkbox h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 month-filter" value="${month}" ${savedMonthFilters[month] !== false ? 'checked' : ''}>
                 <span class="ml-2 text-gray-700">${month}</span>
             </label>
         `).join('');
 
         document.querySelectorAll('.category-filter, .priority-filter, .date-type-filter').forEach(el => {
-            el.addEventListener('change', renderCalendar);
+            el.addEventListener('change', renderMultiCalendar);
         });
         document.querySelectorAll('.month-filter').forEach(el => {
             el.addEventListener('change', (e) => {
@@ -317,25 +401,39 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // Calendar Logic
-    const renderCalendar = () => {
-        // Clear previous grid except for headers
-        while (calendarGrid.children.length > 7) {
-            calendarGrid.removeChild(calendarGrid.lastChild);
-        }
+    const renderMultiCalendar = () => {
+        const year = parseInt(yearSelect.value);
+        const month = parseInt(monthSelect.value) - 1;
+        currentDate = new Date(year, month, 1);
 
-        calendarTitle.textContent = `${currentDate.getFullYear()}년 ${currentDate.getMonth() + 1}월`;
-        
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth();
-        const firstDay = new Date(year, month, 1);
-        const lastDay = new Date(year, month + 1, 0);
-        
+        const dates = [
+            new Date(year, month, 1),
+            new Date(year, month + 1, 1),
+            new Date(year, month + 2, 1)
+        ];
+
+        calendarContainers.forEach((container, index) => {
+            renderSingleMonth(container, dates[index], allData);
+        });
+    };
+
+    const renderSingleMonth = (container, date, data) => {
+        const titleEl = container.querySelector('.calendar-title-text');
+        const gridEl = container.querySelector('.calendar-grid');
+        gridEl.innerHTML = '';
+
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        titleEl.textContent = `${year}년 ${month + 1}월`;
+
+        const firstDayOfMonth = new Date(year, month, 1);
+        const lastDayOfMonth = new Date(year, month + 1, 0);
+
         const selectedDateType = document.querySelector('input[name="dateType"]:checked').value;
         const selectedCategories = [...document.querySelectorAll('.category-filter:checked')].map(el => el.value);
         const selectedPriorities = [...document.querySelectorAll('.priority-filter:checked')].map(el => el.value);
 
-        const filteredData = allData.filter(item => {
+        const monthData = data.filter(item => {
             const dateStr = item[selectedDateType];
             if (!dateStr) return false;
             const itemDate = new Date(dateStr);
@@ -345,69 +443,74 @@ document.addEventListener('DOMContentLoaded', () => {
             return inMonth && inCategory && inPriority;
         });
 
-        // Create empty cells for the first day offset
-        for (let i = 0; i < firstDay.getDay(); i++) {
-            const emptyCell = document.createElement('div');
-            emptyCell.className = 'calendar-day p-2 bg-white is-other-month';
-            calendarGrid.appendChild(emptyCell);
+        for (let i = 0; i < firstDayOfMonth.getDay(); i++) {
+            gridEl.insertAdjacentHTML('beforeend', '<div class="calendar-day p-1 bg-white"></div>');
         }
 
-        // Create cells for each day of the month
-        for (let i = 1; i <= lastDay.getDate(); i++) {
+        for (let i = 1; i <= lastDayOfMonth.getDate(); i++) {
             const dayCell = document.createElement('div');
-            dayCell.className = 'calendar-day p-2 bg-white relative';
-            dayCell.dataset.date = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+            const dayDate = new Date(year, month, i);
+            const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+            const holidayKey = `${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+            
+            dayCell.className = 'calendar-day p-1 bg-white relative';
+            dayCell.dataset.date = dateString;
+
+            const eventsForDay = monthData.filter(item => new Date(item[selectedDateType]).getDate() === i);
+            
+            const dayOfWeek = dayDate.getDay();
+            const isHoliday = holidays[year]?.[holidayKey];
+            const hasVacation = eventsForDay.some(event => event.대분류 === '휴가');
+            if (dayOfWeek === 0 || dayOfWeek === 6 || isHoliday || hasVacation) {
+                dayCell.classList.add('is-resting-day');
+            }
             
             const dayNumber = document.createElement('span');
             dayNumber.textContent = i;
-            dayCell.appendChild(dayNumber);
+            if (dayOfWeek === 0 || isHoliday) dayNumber.classList.add('text-red-500');
+            if (dayOfWeek === 6) dayNumber.classList.add('text-blue-500');
 
-            // Highlight today
             const today = new Date();
             if (year === today.getFullYear() && month === today.getMonth() && i === today.getDate()) {
-                dayNumber.classList.add('bg-blue-500', 'text-white', 'rounded-full', 'w-6', 'h-6', 'flex', 'items-center', 'justify-center');
+                dayNumber.classList.add('bg-indigo-500', 'text-white', 'rounded-full', 'w-5', 'h-5', 'flex', 'items-center', 'justify-center', 'font-bold');
+            }
+            dayCell.appendChild(dayNumber);
+            
+            if (isHoliday) {
+                const holidayEl = document.createElement('div');
+                holidayEl.textContent = holidays[year][holidayKey];
+                holidayEl.className = 'holiday-text';
+                dayCell.appendChild(holidayEl);
             }
             
             dayCell.addEventListener('click', () => openModalForNew(dayCell.dataset.date));
-            
-            const eventsForDay = filteredData.filter(item => {
-                const itemDate = new Date(item[selectedDateType]);
-                return itemDate.getDate() === i;
-            });
-            
-            let isVacationDay = false;
 
             eventsForDay.forEach(event => {
                 const eventEl = document.createElement('div');
                 eventEl.textContent = event.간단내용;
                 eventEl.className = `event event-${event.대분류} cursor-pointer`;
-                if(event.대분류 === '휴가') {
-                    eventEl.classList.add('vacation-text');
-                    isVacationDay = true;
-                }
                 eventEl.addEventListener('click', (e) => {
-                    e.stopPropagation(); // Prevent day click
+                    e.stopPropagation();
                     openModalForEdit(event);
                 });
                 dayCell.appendChild(eventEl);
             });
-
-            if(isVacationDay) {
-                dayCell.classList.add('vacation-cell');
-            }
-
-            calendarGrid.appendChild(dayCell);
+            gridEl.appendChild(dayCell);
         }
     };
     
     prevMonthBtn.addEventListener('click', () => {
         currentDate.setMonth(currentDate.getMonth() - 1);
-        renderCalendar();
+        yearSelect.value = currentDate.getFullYear();
+        monthSelect.value = currentDate.getMonth() + 1;
+        renderMultiCalendar();
     });
 
     nextMonthBtn.addEventListener('click', () => {
         currentDate.setMonth(currentDate.getMonth() + 1);
-        renderCalendar();
+        yearSelect.value = currentDate.getFullYear();
+        monthSelect.value = currentDate.getMonth() + 1;
+        renderMultiCalendar();
     });
 
 
@@ -431,14 +534,11 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const renderTable = () => {
         dataTableBody.innerHTML = '';
-        
         const activeMonthFilters = [...document.querySelectorAll('.month-filter:checked')].map(el => el.value);
-
         const filtered = allData.filter(item => {
              const itemMonth = (item.등록일자 || '').substring(0, 7);
              return activeMonthFilters.includes(itemMonth);
         });
-
         const sorted = [...filtered].sort((a, b) => {
             const valA = a[sortState.column] || '';
             const valB = b[sortState.column] || '';
@@ -451,10 +551,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const row = document.createElement('tr');
             row.className = 'border-b hover:bg-gray-50';
             row.dataset.id = item.id;
-
             headers.forEach(header => {
                 const cell = document.createElement('td');
                 cell.className = 'py-3 px-4 text-sm text-gray-700';
+                if (header !== '간단내용' && header !== '세부내용') {
+                    cell.classList.add('whitespace-nowrap');
+                }
                 cell.textContent = item[header] || '';
                 cell.dataset.column = header;
                 cell.setAttribute('contenteditable', 'true');
@@ -515,17 +617,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const rowData = {};
         headers.forEach(header => {
             const input = document.getElementById(`form-${header}`);
-            if (input) {
-                 rowData[header] = input.value;
-            }
+            if (input) rowData[header] = input.value;
         });
         
-        const action = rowData.id ? 'update' : 'create';
+        const action = document.getElementById('form-id').value ? 'update' : 'create';
+        if (action === 'update') rowData.id = document.getElementById('form-id').value;
+
         await postData({ action, rowData });
         closeModal();
     });
     
-
     // Tab switching
     calendarTab.addEventListener('click', () => {
         calendarView.style.display = 'block';
@@ -543,7 +644,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initial Load
     if (SCRIPT_URL === "YOUR_GOOGLE_APPS_SCRIPT_URL") {
-        alert("중요: index.html 파일의 123번째 줄에 있는 SCRIPT_URL을 본인의 Google Apps Script URL로 교체해주세요.");
+        alert("중요: index.html 파일의 SCRIPT_URL을 본인의 Google Apps Script URL로 교체해주세요.");
         showLoader(false);
     } else {
         fetchData();
@@ -553,3 +654,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </body>
 </html>
+
